@@ -1,0 +1,23 @@
+services:
+  backend:
+    build: .
+    container_name: backend_iot_nestjs
+    ports:
+      - '3000:3000'
+    env_file:
+      - .env
+    depends_on:
+      - mqtt
+    # command: npm run start:dev
+  mqtt:
+    image: eclipse-mosquitto:2.0
+    container_name: mosquitto
+    ports:
+      - '1883:1883'
+    volumes:
+      - ./mqtt/mosquitto/config:/mosquitto/config
+      - mosquitto_data:/mosquitto/data
+      - mosquitto_log:/mosquitto/log
+volumes:
+  mosquitto_data:
+  mosquitto_log:

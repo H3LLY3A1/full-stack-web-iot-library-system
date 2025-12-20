@@ -1,12 +1,19 @@
 import type { Book } from "../../types/book";
 
-export default function BookTile({ book }: { book: Book }) {
+type BookTileProps = {
+  book: Book;
+  onClick?: () => void;
+};
+
+export default function BookTile({ book, onClick }: BookTileProps) {
   const activeBorrow = book.borrows.find((b) => !b.returnedAt);
   const isBorrowed = Boolean(activeBorrow);
 
   return (
     <article
       key={book.cardId}
+      onClick={onClick}
+      role={onClick ? "button" : undefined}
       className="flex flex-col justify-between rounded-2xl border border-neutral-200 bg-neutral-50/80 p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
     >
       <div className="flex items-start justify-between gap-2">

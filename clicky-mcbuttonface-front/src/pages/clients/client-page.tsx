@@ -93,8 +93,8 @@ export default function ClientPage() {
   const pastBorrows = client.borrows.filter((b: any) => !!b.returnedAt);
 
   return (
-    <div className="min-h-screen bg-white text-black">
-      <div className="mx-auto max-w-5xl px-4 py-8">
+    <div className="flex min-h-[80vh] w-full justify-center items-center bg-white text-black">
+      <div className="w-5xl px-4 py-8">
         <article className="flex flex-col rounded-2xl border border-neutral-200 bg-neutral-50/80 p-12 shadow-sm">
           <header className="flex flex-wrap items-start justify-between gap-4">
             <div className="flex flex-col gap-1">
@@ -156,13 +156,13 @@ export default function ClientPage() {
             <section className="py-5">
               <div className="flex items-center justify-between gap-3">
                 <h2 className="text-md font-semibold tracking-tight text-neutral-800">
-                  Borrows
+                  Current borrows
                 </h2>
               </div>
 
               {activeBorrows.length === 0 ? (
                 <p className="mt-2 text-sm text-neutral-600">
-                  No active borrows.
+                  No active borrows
                 </p>
               ) : (
                 <ul className="mt-3 space-y-2 text-sm text-neutral-700">
@@ -193,9 +193,7 @@ export default function ClientPage() {
               </h2>
 
               {pastBorrows.length === 0 ? (
-                <p className="mt-2 text-sm text-neutral-600">
-                  No past borrows.
-                </p>
+                <p className="mt-2 text-sm text-neutral-600">No past borrows</p>
               ) : (
                 <ul className="mt-3 space-y-2 text-sm text-neutral-700">
                   {pastBorrows.map((borrow: any) => (

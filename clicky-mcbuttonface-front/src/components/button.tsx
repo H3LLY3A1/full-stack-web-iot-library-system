@@ -8,6 +8,8 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   size?: ButtonSize;
   children: ReactNode;
   className?: string;
+
+  bgColor?: string;
 };
 
 export default function Button({
@@ -15,14 +17,19 @@ export default function Button({
   size = "md",
   children,
   className = "",
+  bgColor: primaryBgClassName = "bg-black",
   ...props
 }: ButtonProps) {
   const base =
     "inline-flex items-center gap-2 rounded-full font-medium shadow-sm transition disabled:cursor-not-allowed disabled:opacity-70";
-  const variantClass =
-    variant === "primary"
-      ? "bg-black text-white hover:bg-neutral-900 active:bg-black/90"
-      : "border border-neutral-200 bg-white text-neutral-800 hover:bg-neutral-50 active:bg-neutral-50";
+
+  const primaryClass = `text-white ${primaryBgClassName}`;
+
+  const secondaryClass =
+    "border border-neutral-200 bg-white text-neutral-800 hover:bg-neutral-50 active:bg-neutral-50";
+
+  const variantClass = variant === "primary" ? primaryClass : secondaryClass;
+
   const sizeClass = size === "sm" ? "px-4 py-1.5 text-xs" : "px-5 py-2 text-xs";
 
   return (

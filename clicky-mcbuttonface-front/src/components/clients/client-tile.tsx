@@ -1,9 +1,16 @@
 import type { Client } from "../../types/client";
 
-export default function ClientTile({ client }: { client: Client }) {
+type ClientTileProps = {
+  client: Client;
+  onClick?: () => void;
+};
+
+export default function ClientTile({ client, onClick }: ClientTileProps) {
   return (
     <article
       key={client.id}
+      onClick={onClick}
+      role={onClick ? "button" : undefined}
       className="flex flex-col justify-between rounded-2xl border border-neutral-200 bg-neutral-50/80 p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
     >
       <div className="flex items-start justify-between gap-2">

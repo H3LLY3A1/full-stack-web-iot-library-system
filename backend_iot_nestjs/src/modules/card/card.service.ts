@@ -13,15 +13,15 @@ export class CardService {
   }
 
   findAll() {
-    return this.repo.find({ relations: ['user'] });
+    return this.repo.find();
   }
 
   findOne(id: number) {
-    return this.repo.findOne({ where: { id }, relations: ['user'] });
+    return this.repo.findOne({ where: { id } });
   }
 
   findByUid(uid: string) {
-    return this.repo.findOne({ where: { uid }, relations: ['user'] });
+    return this.repo.findOne({ where: { uid } });
   }
 
   async update(id: number, uid: string) {

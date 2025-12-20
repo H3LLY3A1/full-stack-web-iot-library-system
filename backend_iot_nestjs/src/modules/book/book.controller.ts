@@ -17,19 +17,19 @@ export class BookController {
     return this.bookService.findAll();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.bookService.findOne(Number(id));
+  @Get(':cardUid')
+  findOne(@Param('cardUid') cardUid: string) {
+    return this.bookService.findOneByCardUid(cardUid);
   }
 
-  @Put(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateBookDto) {
-    return this.bookService.update(Number(id), dto);
+  @Put(':cardUid')
+  update(@Param('cardUid') cardUid: string, @Body() dto: UpdateBookDto) {
+    return this.bookService.updateByCardUid(cardUid, dto);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.bookService.remove(Number(id));
+  @Delete(':cardUid')
+  remove(@Param('cardUid') cardUid: string) {
+    return this.bookService.removeByCardUid(cardUid);
   }
 
 }

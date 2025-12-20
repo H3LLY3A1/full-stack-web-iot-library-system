@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Book } from '../../entities/book.entity';
+
 import { CreateBookDto } from './dto/create-book.dto';
 import { UpdateBookDto } from './dto/update-book.dto';
 
@@ -9,33 +10,40 @@ import { UpdateBookDto } from './dto/update-book.dto';
 export class BookService {
   constructor(
     @InjectRepository(Book)
-    private readonly repo: Repository<Book>,
+    private readonly bookRepo: Repository<Book>
   ) {}
 
-  create(dto: CreateBookDto) {
-    const b = this.repo.create(dto as any);
-    return this.repo.save(b);
+  async create(dto: CreateBookDto & { cardId: string }) {
+    const book = this.bookRepo.create({
+      cardId: dto.cardId,
+      title: dto.title,
+      author: dto.author,
+    });
+    return this.bookRepo.save(book);
   }
 
   findAll() {
-    return this.repo.find({ relations: ['borrows'] });
+    return this.bookRepo.find({ relations: ['borrows'] });
   }
 
-  findOne(id: number) {
-    return this.repo.findOne({ where: { id }, relations: ['borrows'] });
+
+  async findOneByCardUid(cardUid: string) {
+    return this.bookRepo.findOne({ where: { cardId: cardUid }, relations: ['borrows'] });
   }
 
-  async update(id: number, dto: UpdateBookDto) {
-    const book = await this.findOne(id);
+
+  async updateByCardUid(cardUid: string, dto: UpdateBookDto) {
+    const book = await this.bookRepo.findOne({ where: { cardId: cardUid }, relations: ['borrows'] });
     if (!book) throw new NotFoundException('Book not found');
     Object.assign(book, dto as any);
-    return this.repo.save(book);
+    return this.bookRepo.save(book);
   }
 
-  async remove(id: number) {
-    const book = await this.findOne(id);
+
+  async removeByCardUid(cardUid: string) {
+    const book = await this.bookRepo.findOne({ where: { cardId: cardUid }, relations: ['borrows'] });
     if (!book) throw new NotFoundException('Book not found');
-    return this.repo.remove(book);
+    return this.bookRepo.remove(book);
   }
 
 }

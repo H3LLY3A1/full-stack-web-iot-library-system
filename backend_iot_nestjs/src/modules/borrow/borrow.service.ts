@@ -13,13 +13,13 @@ export class BorrowService {
     @InjectRepository(Client) private readonly clientRepo: Repository<Client>,
   ) {}
 
-  async create(bookId: number, clientId: number) {
-    const book = await this.bookRepo.findOne({ where: { id: bookId } });
+  async create(bookCardId: string, clientCardId: string) {
+    const book = await this.bookRepo.findOne({ where: { cardId: bookCardId } });
     if (!book) throw new NotFoundException('Book not found');
-    const client = await this.clientRepo.findOne({ where: { id: clientId } });
+    const client = await this.clientRepo.findOne({ where: { cardId: clientCardId } });
     if (!client) throw new NotFoundException('Client not found');
     // Check if book is already borrowed (no returnedAt)
-    const active = await this.borrowRepo.findOne({ where: { book: { id: bookId }, returnedAt: null } });
+    const active = await this.borrowRepo.findOne({ where: { book: { cardId: bookCardId }, returnedAt: null } });
     if (active) throw new BadRequestException('Book is already borrowed');
     const now = new Date();
     const due = new Date();
@@ -44,11 +44,11 @@ export class BorrowService {
     return this.borrowRepo.save(borrow);
   }
 
-  async borrowsForClient(clientId: number) {
-    return this.borrowRepo.find({ where: { client: { id: clientId } }, relations: ['book'] });
+  async borrowsForClient(clientCardId: string) {
+    return this.borrowRepo.find({ where: { client: { cardId: clientCardId } }, relations: ['book'] });
   }
 
-  async borrowsForBook(bookId: number) {
-    return this.borrowRepo.find({ where: { book: { id: bookId } }, relations: ['client'] });
+  async borrowsForBook(bookCardId: string) {
+    return this.borrowRepo.find({ where: { book: { cardId: bookCardId } }, relations: ['client'] });
   }
 }

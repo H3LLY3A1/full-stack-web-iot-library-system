@@ -66,7 +66,7 @@ export default function BooksPage() {
         ) : (
           <div className="space-y-4">
             {books.map((book) => (
-              <BookTile key={book.id} book={book} />
+              <BookTile key={book.cardId} book={book} />
             ))}
           </div>
         )}

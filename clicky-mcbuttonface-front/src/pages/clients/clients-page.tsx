@@ -66,7 +66,7 @@ export default function ClientsPage() {
         ) : (
           <div className="space-y-4">
             {clients.map((client) => (
-              <ClientTile key={client.id} client={client} />
+              <ClientTile key={client.cardId} client={client} />
             ))}
           </div>
         )}

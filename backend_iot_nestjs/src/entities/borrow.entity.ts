@@ -7,10 +7,10 @@ export class Borrow {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => Book, (book) => book.borrows)
+  @ManyToOne(() => Book, (book) => book.borrows, { onDelete: 'CASCADE' })
   book: Book;
 
-  @ManyToOne(() => Client, (client) => client.borrows)
+  @ManyToOne(() => Client, (client) => client.borrows, { onDelete: 'CASCADE' })
   client: Client;
 
   @Column()

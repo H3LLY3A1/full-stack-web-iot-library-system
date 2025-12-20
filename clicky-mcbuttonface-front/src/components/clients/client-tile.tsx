@@ -13,24 +13,14 @@ export default function ClientTile({ client }: { client: Client }) {
           </h2>
           <p className="mt-0.5 text-xs text-neutral-500">{client.email}</p>
         </div>
-
-        <span
-          className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
-            client.card
-              ? "border border-red-600 bg-red-50 text-red-700"
-              : "border border-neutral-300 bg-white text-neutral-600"
-          }`}
-        >
-          {client.card ? "Has card" : "No card"}
-        </span>
       </div>
 
       <div className="mt-3 space-y-2 text-xs text-neutral-600">
         <div className="flex items-center justify-between gap-2">
-          <span className="truncate">
-            Card UID:{" "}
-            <span className="font-medium">{client.card?.uid ?? "—"}</span>
-          </span>
+              <span className="truncate">
+                Card ID:{" "}
+                <span className="font-medium">{client.cardId ?? "—"}</span>
+              </span>
           <span className="text-[11px] text-neutral-500">
             {client.borrows.length} borrow
             {client.borrows.length === 1 ? "" : "s"}

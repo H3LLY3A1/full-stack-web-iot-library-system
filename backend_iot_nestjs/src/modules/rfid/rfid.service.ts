@@ -1,4 +1,4 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { MqttService } from '../../mqtt/mqtt.service';
 import { CardService } from '../card/card.service';
 import { ClientService } from '../client/client.service';
@@ -6,7 +6,55 @@ import { BorrowService } from '../borrow/borrow.service';
 import { EventsGateway } from '../../gateway/events.gateway';
 
 @Injectable()
-export class RfidService implements OnModuleInit {
+export class RfidService {
+
+  async scanForRfidCard(
+    validateFn: (uid: string, card: any) => Promise<{ ok: boolean; reason?: string }>,
+    scanTopic = 'raspberry/rfid/register',
+    scanPayload: any = { action: 'scan' },
+    timeoutMs = 10000
+  ): Promise<{ status: string; uid?: string; reason?: string }> {
+    this.mqtt.publish(scanTopic, scanPayload);
+
+    return new Promise((resolve) => {
+      let resolved = false;
+      const timeout = setTimeout(() => {
+        if (!resolved) {
+          resolved = true;
+          this.mqtt.publish('raspberry/led', { color: 'red' });
+          resolve({ status: 'timeout' });
+        }
+      }, timeoutMs);
+
+      const handler = async (topic: string, message: string) => {
+        if (topic === 'raspberry/rfid/scan') {
+          try {
+            const payload = JSON.parse(message);
+            const card = await this.cardService.findByUid(payload.uid);
+            const validation = await validateFn(payload.uid, card);
+            if (!validation.ok) {
+              this.mqtt.publish('raspberry/led', { color: 'red' });
+              if (!resolved) {
+                resolved = true;
+                clearTimeout(timeout);
+                resolve({ status: 'rejected', uid: payload.uid, reason: validation.reason });
+              }
+            } else {
+              this.mqtt.publish('raspberry/led', { color: 'green' });
+              if (!resolved) {
+                resolved = true;
+                clearTimeout(timeout);
+                resolve({ status: 'ok', uid: payload.uid });
+              }
+            }
+          } catch (e) {
+            this.logger.error('Invalid message from MQTT: ' + message);
+          }
+        }
+      };
+      this.mqtt.onMessage(handler);
+    });
+  }
   private readonly logger = new Logger('RfidService');
 
   constructor(
@@ -14,56 +62,7 @@ export class RfidService implements OnModuleInit {
     private readonly cardService: CardService,
     private readonly clientService: ClientService,
     private readonly borrowService: BorrowService,
-    private readonly gateway: EventsGateway,
+    public readonly gateway: EventsGateway,
   ) {}
 
-  onModuleInit() {
-    this.mqtt.onMessage(async (topic, message) => {
-      if (topic === 'raspberry/rfid/scan') {
-        try {
-          const payload = JSON.parse(message);
-          await this.handleCardScan(payload.uid);
-        } catch (e) {
-          this.logger.error('Invalid message from MQTT: ' + message);
-        }
-      }
-      if (topic === 'raspberry/rfid/cancel') {
-        this.mqtt.publish('raspberry/led', { color: 'green' });
-        this.gateway.emit('rfid/cancelled', { ok: true });
-      }
-    });
-
-    this.mqtt.publish('raspberry/led', { color: 'green' });
-  }
-
-  async handleCardScan(uid: string) {
-    this.gateway.emit('rfid/scanned', { uid });
-    this.mqtt.publish('raspberry/led', { color: 'red' });
-
-    const card = await this.cardService.findByUid(uid);
-    if (!card || !card.user) {
-      this.logger.log(`Card ${uid} unknown`);
-      this.mqtt.publish('raspberry/rfid/response', { uid, status: 'unknown' });
-      this.gateway.emit('rfid/response', { uid, status: 'unknown' });
-      return { status: 'unknown' };
-    }
-
-    const client = await this.clientService.findOne(card.user.id);
-    const borrows = await this.borrowService.borrowsForClient(client.id);
-    const activeBorrows = borrows.filter(b => !b.returnedAt);
-    this.mqtt.publish('raspberry/rfid/response', { uid, status: 'found', client, borrows: activeBorrows });
-    this.gateway.emit('rfid/response', { uid, status: 'found', client, borrows: activeBorrows });
-    return { status: 'found', client, borrows: activeBorrows };
-  }
-
-  async finishedAction(uid: string) {
-    this.mqtt.publish('raspberry/led', { color: 'green' });
-    this.gateway.emit('rfid/done', { uid });
-  }
-
-  async cancelRead() {
-    this.mqtt.publish('raspberry/rfid/cancel', { reason: 'user_cancelled' });
-    this.mqtt.publish('raspberry/led', { color: 'green' });
-    this.gateway.emit('rfid/cancelled', { ok: true });
-  }
 }

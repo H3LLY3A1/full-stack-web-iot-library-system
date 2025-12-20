@@ -6,8 +6,8 @@ export class BorrowController {
   constructor(private readonly borrowService: BorrowService) {}
 
   @Post()
-  create(@Body('bookId') bookId: number, @Body('clientId') clientId: number) {
-    return this.borrowService.create(bookId, clientId);
+  create(@Body('bookCardId') bookCardId: string, @Body('clientCardId') clientCardId: string) {
+    return this.borrowService.create(bookCardId, clientCardId);
   }
 
   @Get()
@@ -25,13 +25,13 @@ export class BorrowController {
     return this.borrowService.returnBook(Number(id));
   }
 
-  @Get('client/:clientId')
-  borrowsForClient(@Param('clientId') clientId: string) {
-    return this.borrowService.borrowsForClient(Number(clientId));
+  @Get('client/:clientCardId')
+  borrowsForClient(@Param('clientCardId') clientCardId: string) {
+    return this.borrowService.borrowsForClient(clientCardId);
   }
 
-  @Get('book/:bookId')
-  borrowsForBook(@Param('bookId') bookId: string) {
-    return this.borrowService.borrowsForBook(Number(bookId));
+  @Get('book/:bookCardId')
+  borrowsForBook(@Param('bookCardId') bookCardId: string) {
+    return this.borrowService.borrowsForBook(bookCardId);
   }
 }

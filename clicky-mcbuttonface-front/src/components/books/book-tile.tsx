@@ -6,7 +6,7 @@ export default function BookTile({ book }: { book: Book }) {
 
   return (
     <article
-      key={book.id}
+      key={book.cardId}
       className="flex flex-col justify-between rounded-2xl border border-neutral-200 bg-neutral-50/80 p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
     >
       <div className="flex items-start justify-between gap-2">
@@ -31,10 +31,8 @@ export default function BookTile({ book }: { book: Book }) {
       <div className="mt-3 space-y-2 text-xs text-neutral-600">
         <div className="flex items-center justify-between gap-2">
           <span className="truncate">
-            Status:{" "}
-            <span className="font-medium">
-              {isBorrowed ? "Currently borrowed" : "On shelf"}
-            </span>
+            Card ID:{" "}
+            <span className="font-medium">{book.cardId ?? "—"}</span>
           </span>
           <span className="text-[11px] text-neutral-500">
             {book.borrows.length} borrow

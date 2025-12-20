@@ -8,7 +8,7 @@ export class ClientController {
   constructor(private readonly clientService: ClientService) {}
 
   @Post()
-  create(@Body() dto: CreateClientDto) {
+  create(@Body() dto: CreateClientDto & { cardId: string }) {
     return this.clientService.create(dto);
   }
 
@@ -17,28 +17,28 @@ export class ClientController {
     return this.clientService.findAll();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.clientService.findOne(Number(id));
+  @Get(':cardUid')
+  findOne(@Param('cardUid') cardUid: string) {
+    return this.clientService.findOneByCardUid(cardUid);
   }
 
-  @Put(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateClientDto) {
-    return this.clientService.update(Number(id), dto);
+  @Put(':cardUid')
+  update(@Param('cardUid') cardUid: string, @Body() dto: UpdateClientDto) {
+    return this.clientService.updateByCardUid(cardUid, dto);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.clientService.remove(Number(id));
+  @Delete(':cardUid')
+  remove(@Param('cardUid') cardUid: string) {
+    return this.clientService.removeByCardUid(cardUid);
   }
 
-  @Post(':id/card/:uid')
-  assignCard(@Param('id') id: string, @Param('uid') uid: string) {
-    return this.clientService.assignCard(Number(id), uid);
-  }
+  // @Post(':id/card/:uid')
+  // assignCard(@Param('id') id: string, @Param('uid') uid: string) {
+  //   return this.clientService.assignCard(Number(id), uid);
+  // }
 
-  @Delete(':id/card')
-  unassignCard(@Param('id') id: string) {
-    return this.clientService.unassignCard(Number(id));
-  }
+  // @Delete(':id/card')
+  // unassignCard(@Param('id') id: string) {
+  //   return this.clientService.unassignCard(Number(id));
+  // }
 }

@@ -1,10 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import { Entity, Column, OneToMany, PrimaryColumn } from 'typeorm';
 import { Borrow } from './borrow.entity';
 
 @Entity()
 export class Book {
-  @PrimaryGeneratedColumn()
-  id: number;
+
+  @PrimaryColumn()
+  cardId: string; 
 
   @Column()
   title: string;
@@ -14,4 +15,6 @@ export class Book {
 
   @OneToMany(() => Borrow, (borrow) => borrow.book)
   borrows: Borrow[];
+
+
 }

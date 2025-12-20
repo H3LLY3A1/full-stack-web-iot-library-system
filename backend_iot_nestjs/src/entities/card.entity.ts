@@ -1,5 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToOne } from 'typeorm';
-import { Client } from './client.entity';
+import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 
 @Entity()
 export class Card {
@@ -9,6 +8,5 @@ export class Card {
   @Column({ unique: true })
   uid: string;
 
-  @OneToOne(() => Client, (client) => client.card, { nullable: true })
-  user: Client;
+
 }

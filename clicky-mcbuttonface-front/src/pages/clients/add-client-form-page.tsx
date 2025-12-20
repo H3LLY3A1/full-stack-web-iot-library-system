@@ -48,8 +48,8 @@ export default function AddClientFormPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white text-black">
-      <div className="max-w-5xl px-4 py-8">
+    <div className="flex h-[70vh] w-5xl items-center justify-center bg-white text-black">
+      <div className="w-5xl px-4 py-8">
         <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-3xl font-semibold tracking-tight">

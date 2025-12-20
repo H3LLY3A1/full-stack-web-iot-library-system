@@ -53,21 +53,6 @@ export default function ClientPage() {
     }
   };
 
-  const handleUnassignCard = async () => {
-    if (!id) return;
-    setActionLoading(true);
-    setError("");
-
-    try {
-      await axios.delete(`http://localhost:3000/clients/${id}/card`);
-      setClient((prev) => (prev ? { ...prev, card: undefined as any } : prev));
-    } catch (e: any) {
-      setError(e?.message ?? "Failed to unassign card");
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
   if (!id) {
     return (
       <div className="min-h-screen bg-white text-black">
@@ -110,127 +95,134 @@ export default function ClientPage() {
   return (
     <div className="min-h-screen bg-white text-black">
       <div className="mx-auto max-w-5xl px-4 py-8">
-        <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h1 className="text-3xl font-semibold tracking-tight">
-              {client.name}
-            </h1>
-            <p className="mt-1 text-sm text-neutral-500">{client.email}</p>
-          </div>
+        <article className="flex flex-col rounded-2xl border border-neutral-200 bg-neutral-50/80 p-12 shadow-sm">
+          <header className="flex flex-wrap items-start justify-between gap-4">
+            <div className="flex flex-col gap-1">
+              <h1 className="text-2xl font-semibold leading-tight tracking-tight">
+                {client.name}
+              </h1>
+              <p className="text-sm text-neutral-500">{client.email}</p>
+            </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              type="button"
-              variant="primary"
-              onClick={handleBack}
-              disabled={actionLoading}
-            >
-              Back
-            </Button>
-            <Button
-              type="button"
-              variant="primary"
-              onClick={handleEditClient}
-              disabled={actionLoading}
-            >
-              Edit client
-            </Button>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                type="button"
+                variant="primary"
+                onClick={handleBack}
+                disabled={actionLoading}
+              >
+                Back
+              </Button>
 
-            <Button
-              type="button"
-              variant="primary"
-              onClick={handleDeleteClient}
-              disabled={actionLoading}
-              bgColor="bg-red-700"
-            >
-              {actionLoading ? "Deleting..." : "Delete client"}
-            </Button>
-          </div>
-        </header>
+              <Button
+                type="button"
+                variant="primary"
+                onClick={handleEditClient}
+                disabled={actionLoading}
+              >
+                Edit client
+              </Button>
 
-        {error && (
-          <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-            <p className="font-medium">Something went wrong</p>
-            <p className="mt-1 text-xs text-red-700">{error}</p>
-          </div>
-        )}
+              <Button
+                type="button"
+                variant="primary"
+                onClick={handleDeleteClient}
+                disabled={actionLoading}
+                bgColor="bg-red-700"
+              >
+                {actionLoading ? "Deleting..." : "Delete client"}
+              </Button>
+            </div>
+          </header>
 
-        <section className="space-y-4 gap-2 flex flex-col mt-12">
-          <div>
-            <h2 className="text-lg font-semibold tracking-tight text-neutral-800">
-              Card
-            </h2>
+          {error && (
+            <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+              <p className="font-medium">Something went wrong</p>
+              <p className="mt-1 text-xs text-red-700">{error}</p>
+            </div>
+          )}
 
-            <p className="mt-2 text-sm text-neutral-600">
-              {client.cardId ? client.cardId : "No active borrows."}
-            </p>
-          </div>
+          <div className="mt-6 divide-y divide-neutral-200">
+            <section className="py-5">
+              <h2 className="text-md font-semibold tracking-tight text-neutral-800">
+                Card
+              </h2>
 
-          <div>
-            <h2 className="text-lg font-semibold tracking-tight text-neutral-800">
-              Active borrows
-            </h2>
-
-            {activeBorrows.length === 0 ? (
               <p className="mt-2 text-sm text-neutral-600">
-                No active borrows.
+                {client.cardId ? client.cardId : "No card assigned."}
               </p>
-            ) : (
-              <ul className="mt-3 space-y-2 text-sm text-neutral-700">
-                {activeBorrows.map((borrow: any) => (
-                  <li
-                    key={borrow.id}
-                    className="flex flex-wrap items-baseline justify-between gap-2 rounded-xl border border-neutral-200 bg-white px-3 py-2"
-                  >
-                    <div className="space-y-0.5">
-                      {borrow.book?.title && (
-                        <p className="font-medium">{borrow.book.title}</p>
-                      )}
-                      <p className="text-xs text-neutral-500">
-                        Borrowed{" "}
-                        {new Date(borrow.borrowedAt).toLocaleDateString()} • Due{" "}
-                        {new Date(borrow.dueDate).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+            </section>
 
-          <div>
-            <h2 className="text-lg font-semibold tracking-tight text-neutral-800">
-              Borrow history
-            </h2>
+            <section className="py-5">
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="text-md font-semibold tracking-tight text-neutral-800">
+                  Borrows
+                </h2>
+              </div>
 
-            {pastBorrows.length === 0 ? (
-              <p className="mt-2 text-sm text-neutral-600">No past borrows.</p>
-            ) : (
-              <ul className="mt-3 space-y-2 text-sm text-neutral-700">
-                {pastBorrows.map((borrow: any) => (
-                  <li
-                    key={borrow.id}
-                    className="flex flex-wrap items-baseline justify-between gap-2 rounded-xl border border-neutral-200 bg-white px-3 py-2"
-                  >
-                    <div className="space-y-0.5">
-                      {borrow.book?.title && (
-                        <p className="font-medium">{borrow.book.title}</p>
-                      )}
-                      <p className="text-xs text-neutral-500">
-                        Borrowed{" "}
-                        {new Date(borrow.borrowedAt).toLocaleDateString()} •
-                        Returned{" "}
-                        {borrow.returnedAt
-                          ? new Date(borrow.returnedAt).toLocaleDateString()
-                          : "—"}
-                      </p>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
+              {activeBorrows.length === 0 ? (
+                <p className="mt-2 text-sm text-neutral-600">
+                  No active borrows.
+                </p>
+              ) : (
+                <ul className="mt-3 space-y-2 text-sm text-neutral-700">
+                  {activeBorrows.map((borrow: any) => (
+                    <li
+                      key={borrow.id}
+                      className="flex flex-wrap items-baseline justify-between gap-2 rounded-xl border border-neutral-200 bg-white px-3 py-2"
+                    >
+                      <div className="space-y-0.5">
+                        {borrow.book?.title && (
+                          <p className="font-medium">{borrow.book.title}</p>
+                        )}
+                        <p className="text-xs text-neutral-500">
+                          Borrowed{" "}
+                          {new Date(borrow.borrowedAt).toLocaleDateString()} •
+                          Due {new Date(borrow.dueDate).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+
+            <section className="py-5">
+              <h2 className="text-md font-semibold tracking-tight text-neutral-800">
+                Borrow history
+              </h2>
+
+              {pastBorrows.length === 0 ? (
+                <p className="mt-2 text-sm text-neutral-600">
+                  No past borrows.
+                </p>
+              ) : (
+                <ul className="mt-3 space-y-2 text-sm text-neutral-700">
+                  {pastBorrows.map((borrow: any) => (
+                    <li
+                      key={borrow.id}
+                      className="flex flex-wrap items-baseline justify-between gap-2 rounded-xl border border-neutral-200 bg-white px-3 py-2"
+                    >
+                      <div className="space-y-0.5">
+                        {borrow.book?.title && (
+                          <p className="font-medium">{borrow.book.title}</p>
+                        )}
+                        <p className="text-xs text-neutral-500">
+                          Borrowed{" "}
+                          {new Date(borrow.borrowedAt).toLocaleDateString()} •
+                          Returned{" "}
+                          {borrow.returnedAt
+                            ? new Date(borrow.returnedAt).toLocaleDateString()
+                            : "—"}
+                        </p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
           </div>
-        </section>
+        </article>
       </div>
     </div>
   );

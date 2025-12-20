@@ -11,6 +11,7 @@ import BooksPage from "./pages/books/books-page";
 import AddBookFormPage from "./pages/books/add-book-form-page";
 import ClientPage from "./pages/clients/client-page";
 import BookPage from "./pages/books/book-page";
+import EditBookPage from "./pages/books/edit-book-page";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
@@ -20,6 +21,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
           <Route path="/" element={<HomePage />} />
           <Route path="/books" element={<BooksPage />} />
           <Route path="/books/:id" element={<BookPage />} />
+          <Route path="/books/:cardUid/edit" element={<EditBookPage />} />
           <Route path="/books/add-form" element={<AddBookFormPage />} />
           <Route path="/clients/:id" element={<ClientPage />} />
           <Route path="/clients" element={<ClientsPage />} />

@@ -25,6 +25,10 @@ export default function BooksPage() {
     navigate("/books/add-form");
   };
 
+  const handleOpenBook = (id: string) => {
+    navigate(`/books/${id}`);
+  };
+
   if (loading) {
     return <Loading />;
   }
@@ -64,7 +68,11 @@ export default function BooksPage() {
         ) : (
           <div className="space-y-4">
             {books.map((book) => (
-              <BookTile key={book.cardId} book={book} />
+              <BookTile
+                key={book.cardId}
+                book={book}
+                onClick={() => handleOpenBook(book.cardId)}
+              />
             ))}
           </div>
         )}

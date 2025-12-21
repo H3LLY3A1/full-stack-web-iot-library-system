@@ -25,7 +25,7 @@ export default function RootLayout() {
               to="/books"
               className={({ isActive }) =>
                 `${baseItem} ${
-                  isActive ? "text-zinc-200" : "text-white hover:text-zinc-200"
+                  isActive ? "text-red-400" : "text-white hover:text-zinc-200"
                 }`
               }
             >
@@ -36,7 +36,7 @@ export default function RootLayout() {
               to="/clients"
               className={({ isActive }) =>
                 `${baseItem} ${
-                  isActive ? "text-zinc-200" : "text-white hover:text-zinc-200"
+                  isActive ? "text-red-400" : "text-white hover:text-zinc-200"
                 }`
               }
             >

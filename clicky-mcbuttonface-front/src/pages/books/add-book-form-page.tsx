@@ -3,7 +3,7 @@ import { useRef, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import Button from "../../components/button";
 import { toast } from "react-toastify";
-import SubmitScanCardDialog from "../../components/suBmit-scan-card-dialog";
+import ScanCardDialog from "../../components/scan-card-dialog";
 
 export default function AddBookFormPage() {
   const navigate = useNavigate();
@@ -132,7 +132,13 @@ export default function AddBookFormPage() {
         </div>
       </div>
 
-      {submitting && <SubmitScanCardDialog onCancel={handleDialogCancel} />}
+      {submitting && (
+        <ScanCardDialog
+          title="Registering book"
+          subtitle="Please scan the new book's card"
+          onCancel={handleDialogCancel}
+        />
+      )}
     </div>
   );
 }

@@ -51,4 +51,8 @@ export class BorrowService {
   async borrowsForBook(bookCardId: string) {
     return this.borrowRepo.find({ where: { book: { cardId: bookCardId } }, relations: ['client'] });
   }
+
+  async findByClientId(clientCardId: string) {
+    return this.borrowRepo.find({ where: { client: { cardId: clientCardId } }, relations: ['book', 'client'] });
+  }
 }

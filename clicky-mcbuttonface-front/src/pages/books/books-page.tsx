@@ -38,7 +38,7 @@ export default function BooksPage() {
 
     try {
       const { data } = await axios.post(
-        "http://localhost:3000/rfid/scan-book-mock"
+        "http://localhost:3000/rfid/scan-book"
       );
 
       const status = data.status;

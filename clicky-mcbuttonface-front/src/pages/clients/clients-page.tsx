@@ -38,7 +38,7 @@ export default function ClientsPage() {
 
     try {
       const { data } = await axios.post(
-        "http://localhost:3000/rfid/scan-client-mock"
+        "http://localhost:3000/rfid/scan-client"
       );
 
       const status = data.status;

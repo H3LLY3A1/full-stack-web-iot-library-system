@@ -1,0 +1,15 @@
+# RFID RC522
+mfrc522
+
+# LED WS2812 (neoPixel)
+rpi_ws281x
+adafruit-circuitpython-neopixel
+
+# MQTT Client
+paho-mqtt
+
+# GPIO
+RPi.GPIO
+
+#do displaya
+Pillow

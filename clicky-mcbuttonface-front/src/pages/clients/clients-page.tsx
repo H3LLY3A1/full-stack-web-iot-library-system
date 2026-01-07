@@ -1,16 +1,23 @@
 import axios from "axios";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Loading from "../../components/loading";
 import ErrorInfo from "../../components/error-info";
 import ClientTile from "../../components/clients/client-tile";
 import type { Client } from "../../types/client";
 import Button from "../../components/button";
+import ScanCardDialog from "../../components/scan-card-dialog";
+import { toast } from "react-toastify";
+import { MdPlaylistAdd } from "react-icons/md";
+import { FaRegAddressCard } from "react-icons/fa";
 
 export default function ClientsPage() {
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [isCardScanning, setIsCardScanning] = useState(false);
+  const scanCancelledRef = useRef(false);
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -25,8 +32,45 @@ export default function ClientsPage() {
     navigate("/clients/add-form");
   };
 
+  const handleScanClientCard = async () => {
+    setIsCardScanning(true);
+    scanCancelledRef.current = false;
+
+    try {
+      const { data } = await axios.post(
+        "http://localhost:3000/rfid/scan-client"
+      );
+
+      const status = data.status;
+
+      if (!scanCancelledRef.current) {
+        if (status == "timeout") {
+          toast.error("Timeout: No card scanned");
+        } else if (status == "rejected") {
+          toast.error("Card rejected");
+        } else if (status == "ok") {
+          navigate(`/clients/${data.cardId}`);
+        } else {
+          toast.error("Unknown response status");
+        }
+      }
+    } catch (err: any) {
+      if (!scanCancelledRef.current) {
+        toast.error(err?.message ?? "Request failed");
+      }
+    } finally {
+      setIsCardScanning(false);
+    }
+  };
+
   const handleOpenClient = (id: string) => {
     navigate(`/clients/${id}`);
+  };
+
+  const handleCancelDialog = () => {
+    setIsCardScanning(false);
+    axios.post("http://localhost:3000/rfid/cancel-scan");
+    scanCancelledRef.current = true;
   };
 
   if (loading) {
@@ -54,8 +98,17 @@ export default function ClientsPage() {
             </span>
 
             <Button type="button" variant="primary" onClick={handleAddClient}>
-              <span className="text-sm leading-none">+</span>
-              <span>Add book</span>
+              <MdPlaylistAdd />
+              <span>Add client</span>
+            </Button>
+
+            <Button
+              type="button"
+              variant="primary"
+              onClick={handleScanClientCard}
+            >
+              <FaRegAddressCard />
+              <span>Scan client card</span>
             </Button>
           </div>
         </header>
@@ -77,6 +130,14 @@ export default function ClientsPage() {
           </div>
         )}
       </div>
+
+      {isCardScanning && (
+        <ScanCardDialog
+          title="Client page"
+          subtitle="Please scan the client's card"
+          onCancel={handleCancelDialog}
+        />
+      )}
     </div>
   );
 }

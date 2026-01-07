@@ -1,16 +1,23 @@
 import axios from "axios";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Loading from "../../components/loading";
 import ErrorInfo from "../../components/error-info";
 import BookTile from "../../components/books/book-tile";
 import type { Book } from "../../types/book";
 import Button from "../../components/button";
+import { MdPlaylistAdd } from "react-icons/md";
+import { FaRegAddressCard } from "react-icons/fa";
+import { toast } from "react-toastify";
+import ScanCardDialog from "../../components/scan-card-dialog";
 
 export default function BooksPage() {
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [isCardScanning, setIsCardScanning] = useState(false);
+  const scanCancelledRef = useRef(false);
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -25,8 +32,45 @@ export default function BooksPage() {
     navigate("/books/add-form");
   };
 
+  const handleScanBookCard = async () => {
+    setIsCardScanning(true);
+    scanCancelledRef.current = false;
+
+    try {
+      const { data } = await axios.post(
+        "http://localhost:3000/rfid/scan-book"
+      );
+
+      const status = data.status;
+
+      if (!scanCancelledRef.current) {
+        if (status == "timeout") {
+          toast.error("Timeout: No card scanned");
+        } else if (status == "rejected") {
+          toast.error("Card rejected");
+        } else if (status == "ok") {
+          navigate(`/books/${data.cardId}`);
+        } else {
+          toast.error("Unknown response status");
+        }
+      }
+    } catch (err: any) {
+      if (!scanCancelledRef.current) {
+        toast.error(err?.message ?? "Request failed");
+      }
+    } finally {
+      setIsCardScanning(false);
+    }
+  };
+
   const handleOpenBook = (id: string) => {
     navigate(`/books/${id}`);
+  };
+
+  const handleCancelDialog = () => {
+    setIsCardScanning(false);
+    axios.post("http://localhost:3000/rfid/cancel-scan");
+    scanCancelledRef.current = true;
   };
 
   if (loading) {
@@ -54,8 +98,17 @@ export default function BooksPage() {
             </span>
 
             <Button type="button" variant="primary" onClick={handleAddBook}>
-              <span className="text-sm leading-none">+</span>
+              <MdPlaylistAdd />
               <span>Add book</span>
+            </Button>
+
+            <Button
+              type="button"
+              variant="primary"
+              onClick={handleScanBookCard}
+            >
+              <FaRegAddressCard />
+              <span>Scan book card</span>
             </Button>
           </div>
         </header>
@@ -77,6 +130,14 @@ export default function BooksPage() {
           </div>
         )}
       </div>
+
+      {isCardScanning && (
+        <ScanCardDialog
+          title="Book page"
+          subtitle="Please scan the book's card"
+          onCancel={handleCancelDialog}
+        />
+      )}
     </div>
   );
 }

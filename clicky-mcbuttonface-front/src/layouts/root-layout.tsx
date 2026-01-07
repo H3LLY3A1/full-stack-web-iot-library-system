@@ -1,4 +1,5 @@
 import { Link, NavLink, Outlet } from "react-router-dom";
+import { ToastContainer } from "react-toastify";
 
 const baseItem =
   "px-3 py-2 rounded-lg text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500/70";
@@ -24,7 +25,7 @@ export default function RootLayout() {
               to="/books"
               className={({ isActive }) =>
                 `${baseItem} ${
-                  isActive ? "text-zinc-200" : "text-white hover:text-zinc-200"
+                  isActive ? "text-red-400" : "text-white hover:text-zinc-200"
                 }`
               }
             >
@@ -35,7 +36,7 @@ export default function RootLayout() {
               to="/clients"
               className={({ isActive }) =>
                 `${baseItem} ${
-                  isActive ? "text-zinc-200" : "text-white hover:text-zinc-200"
+                  isActive ? "text-red-400" : "text-white hover:text-zinc-200"
                 }`
               }
             >
@@ -47,6 +48,11 @@ export default function RootLayout() {
 
       <main className="mx-auto max-w-5xl px-4 py-8">
         <Outlet />
+        <ToastContainer
+          position="top-center"
+          autoClose={3000}
+          aria-label={undefined}
+        />
       </main>
     </div>
   );

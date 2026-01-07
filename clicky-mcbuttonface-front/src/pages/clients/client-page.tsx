@@ -1,10 +1,14 @@
 import axios from "axios";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Loading from "../../components/loading";
 import ErrorInfo from "../../components/error-info";
 import Button from "../../components/button";
 import type { Client } from "../../types/client";
+import { MdPlaylistAdd } from "react-icons/md";
+import { IoMdReturnLeft } from "react-icons/io";
+import { toast } from "react-toastify";
+import ScanCardDialog from "../../components/scan-card-dialog";
 
 export default function ClientPage() {
   const { id } = useParams<{ id: string }>();
@@ -14,18 +18,29 @@ export default function ClientPage() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState("");
+  const [isBookDialogOpen, setIsBookDialogOpen] = useState(false);
+  const scanCancelledRef = useRef(false);
 
-  useEffect(() => {
+  const fetchClient = useCallback(async () => {
     if (!id) return;
 
-    setLoading(true);
     setError("");
+    setLoading(true);
 
-    axios
-      .get<Client>(`http://localhost:3000/clients/${id}`)
-      .then((res) => setClient(res.data))
-      .catch((e) => setError(e?.message ?? "Request failed"))
-      .finally(() => setLoading(false));
+    try {
+      const res = await axios.get(`http://localhost:3000/clients/${id}`);
+      console.log(res.data);
+      setClient(res.data);
+    } catch (e: any) {
+      setError(e?.message ?? "Request failed");
+      setClient(null);
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    fetchClient();
   }, [id]);
 
   const handleBack = () => {
@@ -51,6 +66,62 @@ export default function ClientPage() {
       setError(e?.message ?? "Failed to delete client");
       setActionLoading(false);
     }
+  };
+
+  const getBook = async () => {
+    setIsBookDialogOpen(true);
+    scanCancelledRef.current = false;
+
+    try {
+      const { data } = await axios.post(
+        "http://localhost:3000/rfid/scan-book"
+      );
+
+      const status = data.status;
+
+      if (!scanCancelledRef.current) {
+        if (status == "timeout") {
+          toast.error("Timeout: No card scanned");
+        } else if (status == "rejected") {
+          toast.error("Card rejected");
+        } else if (status == "ok") {
+          return data.cardId;
+        } else {
+          toast.error("Unknown response status");
+        }
+      }
+    } catch (e: any) {
+      toast.error(e?.message ?? "Request failed");
+    } finally {
+      setIsBookDialogOpen(false);
+    }
+  };
+
+  const handleBorrow = async () => {
+    const bookId = await getBook();
+
+    try {
+      await axios.post("http://localhost:3000/borrows", {
+        bookCardId: bookId,
+        clientCardId: id,
+      });
+    } catch (e: any) {
+      toast.error(e?.response?.data?.message || e?.message || "Request failed");
+      return;
+    }
+
+    await fetchClient();
+  };
+
+  const handleReturn = async (borrow: any) => {
+    await axios.post(`http://localhost:3000/borrows/${borrow.id}/return`);
+    fetchClient();
+  };
+
+  const handleCancelDialog = () => {
+    setIsBookDialogOpen(false);
+    axios.post("http://localhost:3000/rfid/cancel-scan");
+    scanCancelledRef.current = true;
   };
 
   if (!id) {
@@ -158,6 +229,17 @@ export default function ClientPage() {
                 <h2 className="text-md font-semibold tracking-tight text-neutral-800">
                   Current borrows
                 </h2>
+
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="primary"
+                    onClick={handleBorrow}
+                  >
+                    <MdPlaylistAdd />
+                    <span>Borrow</span>
+                  </Button>
+                </div>
               </div>
 
               {activeBorrows.length === 0 ? (
@@ -169,12 +251,30 @@ export default function ClientPage() {
                   {activeBorrows.map((borrow: any) => (
                     <li
                       key={borrow.id}
-                      className="flex flex-wrap items-baseline justify-between gap-2 rounded-xl border border-neutral-200 bg-white px-3 py-2"
+                      className="flex flex-wrap items-baseline justify-between gap-2 rounded-xl border border-neutral-200 bg-white px-6 py-4"
                     >
-                      <div className="space-y-0.5">
-                        {borrow.book?.title && (
-                          <p className="font-medium">{borrow.book.title}</p>
-                        )}
+                      <div className="flex w-full justify-between items-start">
+                        <div>
+                          {borrow.book?.title && (
+                            <p className="text-md font-semibold">
+                              {borrow.book.title}
+                            </p>
+                          )}
+                          {borrow.book?.author && (
+                            <p className="text-xsfont-medium">
+                              {borrow.book.author}
+                            </p>
+                          )}
+                          <Button
+                            type="button"
+                            variant="primary"
+                            onClick={() => handleReturn(borrow)}
+                            className="mt-4"
+                          >
+                            <IoMdReturnLeft />
+                            <span>Return</span>
+                          </Button>
+                        </div>
                         <p className="text-xs text-neutral-500">
                           Borrowed{" "}
                           {new Date(borrow.borrowedAt).toLocaleDateString()} •
@@ -222,6 +322,14 @@ export default function ClientPage() {
           </div>
         </article>
       </div>
+
+      {isBookDialogOpen && (
+        <ScanCardDialog
+          title="Book borrow"
+          subtitle="Please scan the book's card"
+          onCancel={handleCancelDialog}
+        />
+      )}
     </div>
   );
 }

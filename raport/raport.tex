@@ -1,0 +1,283 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[polish]{babel}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{setspace}
+
+\geometry{margin=2.5cm}
+\onehalfspacing
+
+
+\title{
+\textbf{Raport z realizacji projektu programistycznego} \\[0.5cm]
+\large System biblioteczny
+}
+
+\author{
+Autorzy (grupa C): \\[0.2cm]
+Dawid Błaszczyk - nr indeksu \\
+Błazej Kowal - nr indeksu \\
+Alina Lenart - nr indeksu \\
+Bartosz Wacławiak - nr indeksu \\[0.4cm]
+Prowadzący laboratorium: \\
+dr inż. Krzysztof Chudzik
+}
+
+\date{
+Data ukończenia pracy: \\ 
+07.01.2025
+}
+
+\begin{document}
+
+\maketitle
+\thispagestyle{empty}
+\newpage
+
+% Spis treści
+\tableofcontents
+\newpage
+
+\section{Wymagania projektowe}
+
+\subsection{Wymagania funkcjonalne}
+
+System biblioteczny IoT musi spełniać następujące wymagania funkcjonalne:
+
+\subsubsection{Obsługa kart RFID}
+\begin{itemize}
+    \item System musi umożliwiać odczyt kart RFID za pomocą czytnika MFRC522.
+    \item System musi automatycznie wykrywać przyłożenie i zabranie karty RFID.
+    \item Odczytany identyfikator karty (UID) musi być konwertowany do formatu szesnastkowego i przesyłany do serwera centralnego.
+    \item System musi rozróżniać między kartami klientów biblioteki i kartami przypisanymi do książek.
+\end{itemize}
+
+\subsubsection{Zarządzanie bazą danych}
+\begin{itemize}
+    \item System musi przechowywać informacje o klientach (imię, nazwisko, powiązana karta RFID).
+    \item System musi przechowywać informacje o książkach (tytuł, autor, powiązana karta RFID).
+    \item System musi rejestrować wypożyczenia i zwroty książek z datami operacji.
+    \item System musi umożliwiać automatyczne tworzenie nowych rekordów kart przy pierwszym skanowaniu nieznanego UID.
+\end{itemize}
+
+\subsubsection{Proces wypożyczania i zwracania}
+\begin{itemize}
+    \item System musi umożliwiać wypożyczenie książki poprzez zeskanowanie karty klienta, a następnie karty książki.
+    \item System musi umożliwiać zwrot książki poprzez analogiczny proces skanowania.
+    \item System musi wyświetlać informacje o aktywnych wypożyczeniach klienta po zeskanowaniu jego karty.
+    \item System musi weryfikować poprawność operacji (np. czy książka jest dostępna, czy klient już ją wypożyczył).
+\end{itemize}
+
+\subsubsection{Interfejs użytkownika}
+\begin{itemize}
+    \item System musi posiadać webowy interfejs graficzny dostępny przez przeglądarkę.
+    \item Interfejs musi umożliwiać przeglądanie listy wszystkich klientów, książek i wypożyczeń.
+    \item Interfejs musi umożliwiać ręczne dodawanie, edycję i usuwanie klientów oraz książek.
+    \item Interfejs musi wyświetlać informacje o zeskanowanej karcie w czasie rzeczywistym.
+    \item Interfejs musi umożliwiać przeprowadzenie pełnego procesu wypożyczania/zwrotu z graficznym przewodnikiem.
+\end{itemize}
+
+\subsubsection{Komunikacja MQTT}
+\begin{itemize}
+    \item Terminale RFID (Raspberry Pi) muszą komunikować się z serwerem centralnym przez protokół MQTT.
+    \item System musi publikować zdarzenia skanowania kart na topic \texttt{raspberry/rfid/scan}.
+    \item Serwer musi odpowiadać z danymi o kliencie lub książce na topic \texttt{raspberry/rfid/response}.
+    \item System musi obsługiwać sterowanie diodami LED przez MQTT (topic \texttt{raspberry/led}).
+\end{itemize}
+
+\subsubsection{Informacje zwrotne dla użytkownika terminala}
+\begin{itemize}
+    \item System musi sygnalizować gotowość do skanowania zieloną diodą LED.
+    \item System musi sygnalizować przetwarzanie karty czerwoną diodą LED.
+    \item System musi emitować dźwięk buzzera po pomyślnym odczytaniu karty.
+    \item System musi wyświetlać informacje o stanie operacji na wyświetlaczu OLED (oczekiwanie, wykryto kartę, przetwarzanie, dane klienta/książki).
+\end{itemize}
+
+\subsection{Wymagania niefunkcjonalne}
+
+System musi spełniać następujące wymagania niefunkcjonalne:
+
+\subsubsection{Wydajność}
+\begin{itemize}
+    \item Czas odpowiedzi serwera na żądanie API nie powinien przekraczać 500ms w warunkach normalnego obciążenia.
+    \item System musi przetwarzać zdarzenia RFID w czasie rzeczywistym (opóźnienie poniżej 1 sekundy od momentu skanowania do wyświetlenia informacji).
+    \item Aplikacja webowa musi ładować się w czasie nie dłuższym niż 3 sekundy przy standardowym połączeniu internetowym.
+\end{itemize}
+
+\subsubsection{Niezawodność i stabilność}
+\begin{itemize}
+    \item System musi być odporny na tymczasową utratę połączenia z brokerem MQTT i automatycznie wznawiać komunikację.
+    \item W przypadku błędu odczytu karty RFID, system musi wyświetlić komunikat o błędzie i umożliwić ponowną próbę.
+    \item Baza danych musi zapewniać integralność danych (brak duplikatów wypożyczeń, prawidłowe daty operacji).
+\end{itemize}
+
+\subsubsection{Skalowalność}
+\begin{itemize}
+    \item Architektura systemu musi umożliwiać łatwe dodanie kolejnych terminali RFID bez modyfikacji kodu serwera.
+    \item Baza danych musi być zaprojektowana w sposób umożliwiający przechowywanie tysięcy rekordów klientów i książek.
+\end{itemize}
+
+\subsubsection{Bezpieczeństwo}
+\begin{itemize}
+    \item Komunikacja między komponentami systemu odbywa się w sieci lokalnej (brak wymogu szyfrowania w wersji proof-of-concept).
+    \item Dane w bazie danych muszą być zabezpieczone przed nieautoryzowanym dostępem poprzez odpowiednią konfigurację uprawnień.
+    \item System musi walidować wszystkie dane wejściowe z API, aby zapobiec nieprawidłowym operacjom.
+\end{itemize}
+
+\subsubsection{Środowisko uruchomieniowe i przenośność}
+\begin{itemize}
+    \item Terminal RFID musi działać na platformie Raspberry Pi 4B z systemem operacyjnym Raspberry Pi OS.
+    \item Serwer backendowy musi być uruchamialny na systemach Linux, macOS i Windows.
+    \item Aplikacja webowa musi być kompatybilna z nowoczesnymi przeglądarkami (Chrome, Firefox, Safari, Edge).
+    \item System musi wykorzystywać konteneryzację Docker dla brokera MQTT (eclipse-mosquitto).
+    \item Baza danych SQLite musi być przenośna i nie wymagać dodatkowej konfiguracji serwera baz danych.
+\end{itemize}
+
+\subsubsection{Technologie i standardy}
+\begin{itemize}
+    \item Backend: Node.js z frameworkiem NestJS, TypeScript, TypeORM.
+    \item Frontend: React 19 z TypeScript, React Router, Tailwind CSS, Vite.
+    \item Komunikacja IoT: Protokół MQTT z brokerem Eclipse Mosquitto.
+    \item Baza danych: SQLite 3.
+    \item Raspberry Pi: Python 3 z bibliotekami paho-mqtt (klient MQTT) i mfrc522 (obsługa czytnika RFID).
+    \item Komunikacja w czasie rzeczywistym: WebSockets (Socket.IO) dla aktualizacji interfejsu użytkownika.
+\end{itemize}
+
+\subsubsection{Użyteczność}
+\begin{itemize}
+    \item Interfejs graficzny musi być intuicyjny i nie wymagać specjalistycznego przeszkolenia.
+    \item System musi dostarczać jasne komunikaty o stanie operacji (powodzenie, błąd, oczekiwanie).
+    \item Wyświetlacz OLED na terminalu RFID musi prezentować czytelne informacje o aktualnym stanie systemu.
+    \item Kolorowe diody LED muszą jednoznacznie sygnalizować stan systemu (zielony = gotowy, czerwony = przetwarzanie/błąd).
+\end{itemize}
+
+\subsubsection{Dokumentacja i kod}
+\begin{itemize}
+    \item Kod źródłowy musi być czytelny i zgodny ze standardami danego języka programowania.
+    \item Kluczowe funkcje systemu muszą być opatrzone komentarzami wyjaśniającymi logikę działania.
+    \item Projekt musi zawierać pliki konfiguracyjne umożliwiające łatwe uruchomienie systemu.
+\end{itemize}
+
+TODO ciag dalszy
+
+\section{Opis architektury systemu}
+
+System zostal zaprojektowany w architekturze wielowarstwowej. Sklada się z następujących elementów:
+\begin{itemize}
+    \item warstwy klienckiej,
+    \item warstwy serwerowej,
+    \item warstwy komunikacyjnej,
+    \item warstwy danych.
+\end{itemize}
+
+\subsection{Schemat architektury aplikacji}
+Poniżej przedstawiono schemat architektury systemu z uwzględnieniem architektury sieciowej.
+
+\begin{figure}[H]
+    \centering
+   % \includegraphics[width=0.9\textwidth]{architecture.png}
+    \caption{Schemat architektury systemu}
+\end{figure}
+
+\section{Opis implementacji i zastosowanych rozwiązań}
+
+\subsection{Kluczowe elementy implementacji}
+W tej sekcji opisano najważniejsze fragmenty kodu odpowiedzialne za kluczowe funkcje systemu.
+
+\begin{lstlisting}[language=Python, caption={Przykladowy fragment kodu}]
+def example_function():
+    print("Przykladowa funkcja systemu")
+\end{lstlisting}
+
+\subsection{Implementacja komunikacji MQTT}
+Opis zastosowanego mechanizmu komunikacji MQTT, struktury topiców oraz sposobu przesylania danych.
+
+\begin{lstlisting}[language=Python, caption={Fragment implementacji MQTT}]
+client.connect(broker_address)
+client.publish("example/topic", payload)
+\end{lstlisting}
+
+\subsection{Szyfrowanie i uwierzytelnianie}
+Opis zastosowanych mechanizmów zabezpieczeń:
+\begin{itemize}
+    \item sposób uwierzytelniania użytkowników,
+    \item mechanizmy szyfrowania transmisji danych,
+    \item zabezpieczenia dostępu do zasobów systemu.
+\end{itemize}
+
+\subsection{Inne istotne rozwiązania}
+Opis dodatkowych elementów implementacyjnych uznanych przez Autorów za istotne.
+
+\section{Opis dzialania i prezentacja interfejsu}
+
+\subsection{Instalacja i uruchomienie aplikacji}
+Opis kroków niezbędnych do uruchomienia aplikacji:
+\begin{enumerate}
+    \item Pobranie kodu źródlowego.
+    \item Instalacja wymaganych zależności.
+    \item Konfiguracja środowiska.
+    \item Uruchomienie aplikacji.
+\end{enumerate}
+
+\subsection{Prezentacja interfejsu użytkownika}
+
+\begin{figure}[H]
+    \centering
+  %  \includegraphics[width=0.8\textwidth]{ui_example.png}
+    \caption{Przykladowy ekran aplikacji}
+\end{figure}
+
+Opis przedstawionych ekranów oraz sposobu interakcji użytkownika z systemem.
+
+\section{Opis wkladu pracy Autorów}
+
+\subsection{Autor 1 – Imię Nazwisko}
+\begin{itemize}
+    \item Zakres wykonanych prac.
+    \item Odpowiedzialność za konkretne moduly.
+    \item Szacunkowy wklad procentowy: XX\%.
+\end{itemize}
+
+\subsection{Autor 2 – Imię Nazwisko}
+\begin{itemize}
+    \item Zakres wykonanych prac.
+    \item Odpowiedzialność za konkretne moduly.
+    \item Szacunkowy wklad procentowy: XX\%.
+\end{itemize}
+
+\section{Podsumowanie}
+
+Projekt zostal zrealizowany zgodnie z zalożonymi wymaganiami funkcjonalnymi i niefunkcjonalnymi.  
+W trakcie implementacji napotkano na następujące trudności:
+\begin{itemize}
+    \item opis problemów technicznych,
+    \item ograniczenia czasowe lub sprzętowe.
+\end{itemize}
+
+Możliwe kierunki dalszego rozwoju systemu:
+\begin{itemize}
+    \item rozbudowa funkcjonalności,
+    \item poprawa bezpieczeństwa,
+    \item optymalizacja wydajności.
+\end{itemize}
+
+\section{Literatura}
+
+\begin{itemize}
+    \item Dokumentacja użytych technologii.
+    \item Artykuly techniczne.
+    \item Materialy dydaktyczne.
+\end{itemize}
+
+\section{Aneks}
+
+Kod źródlowy projektu zostal dolączony w formie elektronicznej jako zalącznik.
+
+\end{document}

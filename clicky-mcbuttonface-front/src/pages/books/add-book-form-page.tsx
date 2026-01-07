@@ -1,7 +1,9 @@
 import axios from "axios";
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import Button from "../../components/button";
+import { toast } from "react-toastify";
+import ScanCardDialog from "../../components/scan-card-dialog";
 
 export default function AddBookFormPage() {
   const navigate = useNavigate();
@@ -9,23 +11,40 @@ export default function AddBookFormPage() {
   const [title, setTitle] = useState("");
   const [author, setAuthor] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState("");
+  const scanCancelledRef = useRef(false);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setError("");
     setSubmitting(true);
+    scanCancelledRef.current = false;
+
+    const payload = {
+      title: title.trim(),
+      author: author.trim(),
+    };
 
     try {
-      const payload = {
-        title: title.trim(),
-        author: author.trim(),
-      };
+      const result = await axios.post(
+        "http://localhost:3000/rfid/register-book",
+        payload
+      );
 
-      await axios.post("http://localhost:3000/books", payload);
-      navigate("/books");
+      if (!scanCancelledRef.current) {
+        if (result.data.status == "timeout") {
+          toast.error("Timeout: No card scanned");
+        } else if (result.data.status == "rejected") {
+          toast.error("Card rejected");
+        } else if (result.data.status == "ok") {
+          toast.success("Book added successfully");
+          navigate("/books");
+        } else {
+          toast.error("Unknown response status");
+        }
+      }
     } catch (err: any) {
-      setError(err?.message ?? "Request failed");
+      if (!scanCancelledRef.current) {
+        toast.error(err?.message ?? "Request failed");
+      }
     } finally {
       setSubmitting(false);
     }
@@ -33,6 +52,12 @@ export default function AddBookFormPage() {
 
   const handleCancel = () => {
     navigate("/books");
+  };
+
+  const handleDialogCancel = () => {
+    setSubmitting(false);
+    axios.post("http://localhost:3000/rfid/cancel-scan");
+    scanCancelledRef.current = true;
   };
 
   return (
@@ -50,13 +75,6 @@ export default function AddBookFormPage() {
         </header>
 
         <div className="w-full mt-10">
-          {error && (
-            <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-              <p className="font-medium">Something went wrong</p>
-              <p className="mt-1 text-xs text-red-700">{error}</p>
-            </div>
-          )}
-
           <form
             onSubmit={handleSubmit}
             className="space-y-5 w-full rounded-2xl border border-neutral-200 bg-neutral-50/80 p-6 shadow-sm"
@@ -113,6 +131,14 @@ export default function AddBookFormPage() {
           </form>
         </div>
       </div>
+
+      {submitting && (
+        <ScanCardDialog
+          title="Registering book"
+          subtitle="Please scan the new book's card"
+          onCancel={handleDialogCancel}
+        />
+      )}
     </div>
   );
 }

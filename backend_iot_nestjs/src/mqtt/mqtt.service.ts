@@ -1,11 +1,14 @@
 import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
 import * as mqtt from 'mqtt';
 
+type MessageHandler = (topic: string, message: string) => void;
+
 @Injectable()
 export class MqttService implements OnModuleInit {
   private client: mqtt.MqttClient;
   private logger = new Logger('MqttService');
   private enabled = process.env.MQTT_ENABLED !== 'false';
+  private messageHandlers: MessageHandler[] = [];
 
   onModuleInit() {
     if (!this.enabled) {
@@ -22,7 +25,12 @@ export class MqttService implements OnModuleInit {
     });
 
     this.client.on('message', (topic, payload) => {
-      this.logger.log(`Received topic ${topic} payload ${payload.toString()}`);
+      const message = payload.toString();
+      this.logger.log(`Received topic ${topic} payload ${message}`);
+
+      this.messageHandlers.forEach(handler => {
+        handler(topic, message);
+      });
     });
 
     this.client.on('error', (err) => {
@@ -50,7 +58,21 @@ export class MqttService implements OnModuleInit {
   }
 
   onMessage(callback: (topic: string, message: string) => void) {
-    if (!this.enabled) return; 
-    this.client?.on('message', (topic, buf) => callback(topic, buf.toString()));
+    if (!this.enabled) return;
+
+    if (!this.messageHandlers.includes(callback)) {
+      this.messageHandlers.push(callback);
+      this.logger.debug(`Registered new message handler (total: ${this.messageHandlers.length})`);
+    }
+  }
+
+  offMessage(callback: (topic: string, message: string) => void) {
+    if (!this.enabled) return;
+
+    const index = this.messageHandlers.indexOf(callback);
+    if (index !== -1) {
+      this.messageHandlers.splice(index, 1);
+      this.logger.debug(`Removed message handler (remaining: ${this.messageHandlers.length})`);
+    }
   }
 }

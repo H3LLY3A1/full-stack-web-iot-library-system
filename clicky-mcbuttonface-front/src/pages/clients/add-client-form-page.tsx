@@ -1,35 +1,50 @@
 import axios from "axios";
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import HashLoader from "react-spinners/HashLoader";
 import Button from "../../components/button";
+import { toast } from "react-toastify";
+import ScanCardDialog from "../../components/scan-card-dialog";
 
 export default function AddClientFormPage() {
   const navigate = useNavigate();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [cardUid, setCardUid] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState("");
-  const [cardDialogOpen, setCardDialogOpen] = useState(false);
+  const scanCancelledRef = useRef(false);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setError("");
     setSubmitting(true);
+    scanCancelledRef.current = false;
+
+    const payload = {
+      name: name.trim(),
+      email: email.trim(),
+    };
 
     try {
-      const payload = {
-        name: name.trim(),
-        email: email.trim(),
-        cardUid: cardUid.trim() === "" ? null : cardUid.trim(),
-      };
+      const result = await axios.post(
+        "http://localhost:3000/rfid/register-client",
+        payload
+      );
 
-      await axios.post("http://localhost:3000/clients", payload);
-      navigate("/clients");
+      if (!scanCancelledRef.current) {
+        if (result.data.status == "timeout") {
+          toast.error("Timeout: No card scanned");
+        } else if (result.data.status == "rejected") {
+          toast.error("Card rejected");
+        } else if (result.data.status == "ok") {
+          toast.success("Client added successfully");
+          navigate("/clients");
+        } else {
+          toast.error("Unknown response status");
+        }
+      }
     } catch (err: any) {
-      setError(err?.message ?? "Request failed");
+      if (!scanCancelledRef.current) {
+        toast.error(err?.message ?? "Request failed");
+      }
     } finally {
       setSubmitting(false);
     }
@@ -39,12 +54,10 @@ export default function AddClientFormPage() {
     navigate("/clients");
   };
 
-  const handleOpenCardDialog = () => {
-    setCardDialogOpen(true);
-  };
-
-  const handleCloseCardDialog = () => {
-    setCardDialogOpen(false);
+  const handleDialogCancel = () => {
+    setSubmitting(false);
+    axios.post("http://localhost:3000/rfid/cancel-scan");
+    scanCancelledRef.current = true;
   };
 
   return (
@@ -61,14 +74,7 @@ export default function AddClientFormPage() {
           </div>
         </header>
 
-        <div className="w-full mt-10">
-          {error && (
-            <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-              <p className="font-medium">Something went wrong</p>
-              <p className="mt-1 text-xs text-red-700">{error}</p>
-            </div>
-          )}
-
+        <div className="w-full mt-6">
           <form
             onSubmit={handleSubmit}
             className="space-y-5 w-full rounded-2xl border border-neutral-200 bg-neutral-50/80 p-6 shadow-sm"
@@ -109,37 +115,6 @@ export default function AddClientFormPage() {
               />
             </div>
 
-            <div className="space-y-1.5">
-              <span className="text-xs font-medium uppercase tracking-wide text-neutral-700">
-                Card UID
-              </span>
-
-              <div className="w-full min-h-12 flex items-center rounded-xl border border-neutral-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-100">
-                {cardUid.trim() === "" ? (
-                  <span className="text-sm text-neutral-500">
-                    No card assigned
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center rounded-full border border-neutral-200 bg-neutral-50 px-2.5 py-1 text-sm font-mono text-neutral-800">
-                    {cardUid}
-                  </span>
-                )}
-
-                <div className="ml-auto">
-                  {cardUid.trim() === "" ? (
-                    <Button
-                      type="button"
-                      variant="primary"
-                      onClick={handleOpenCardDialog}
-                      disabled={submitting}
-                    >
-                      Add card
-                    </Button>
-                  ) : null}
-                </div>
-              </div>
-            </div>
-
             <div className="flex items-center justify-end gap-3 pt-2">
               <Button
                 type="button"
@@ -157,29 +132,12 @@ export default function AddClientFormPage() {
         </div>
       </div>
 
-      {cardDialogOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="min-w-1/4 max-w-2/5 rounded-2xl bg-white p-6 shadow-lg">
-            <h2 className="text-base font-semibold leading-tight">
-              Waiting for card…
-            </h2>
-            <p className="mt-1 text-xs text-neutral-500">
-              Hold the RFID card near the reader to assign it to this client.
-            </p>
-
-            <div className="mt-16 flex flex-col items-center gap-4">
-              <HashLoader />
-              <Button
-                type="button"
-                variant="primary"
-                className="mt-12"
-                onClick={handleCloseCardDialog}
-              >
-                Cancel
-              </Button>
-            </div>
-          </div>
-        </div>
+      {submitting && (
+        <ScanCardDialog
+          title="Registering client"
+          subtitle="Please scan the new client's card"
+          onCancel={handleDialogCancel}
+        />
       )}
     </div>
   );

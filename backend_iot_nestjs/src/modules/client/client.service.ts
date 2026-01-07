@@ -26,26 +26,33 @@ export class ClientService {
     return this.clientRepo.find({ relations: ["borrows"] });
   }
 
-
   async findOneByCardUid(cardUid: string) {
-    return this.clientRepo.findOne({ where: { cardId: cardUid }, relations: ["borrows"] });
+    return this.clientRepo.findOne({
+      where: { cardId: cardUid },
+      relations: {
+        borrows: { book: true },
+      },
+    });
   }
 
-
   async updateByCardUid(cardUid: string, dto: UpdateClientDto) {
-    const client = await this.clientRepo.findOne({ where: { cardId: cardUid }, relations: ["borrows"] });
+    const client = await this.clientRepo.findOne({
+      where: { cardId: cardUid },
+      relations: ["borrows"],
+    });
     if (!client) throw new NotFoundException("Client not found");
     Object.assign(client, dto as any);
     return this.clientRepo.save(client);
   }
 
-
   async removeByCardUid(cardUid: string) {
-    const client = await this.clientRepo.findOne({ where: { cardId: cardUid }, relations: ["borrows"] });
+    const client = await this.clientRepo.findOne({
+      where: { cardId: cardUid },
+      relations: ["borrows"],
+    });
     if (!client) throw new NotFoundException("Client not found");
     return this.clientRepo.remove(client);
   }
-
 
   // async assignCard(clientId: number, uid: string) {
   //   const client = await this.findOne(clientId);

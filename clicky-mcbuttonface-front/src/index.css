@@ -1,1 +1,10 @@
 @import "tailwindcss";
+
+:root {
+  --toastify-color-success: #098938;
+  --toastify-color-error: #dc2626;
+  --toastify-color-info: #2563eb;
+  --toastify-color-warning: #f59e0b;
+
+  --toastify-toast-top: 112px;
+}

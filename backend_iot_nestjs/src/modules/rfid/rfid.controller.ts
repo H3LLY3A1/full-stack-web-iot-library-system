@@ -45,34 +45,50 @@ export class RfidController {
     return result;
   }
 
-
-  @Post('register-request')
-  async registerRequest() {
-    const result = await this.rfidService.scanForRfidCard(
-      async (uid, card) => {
-        if (!card) return { ok: false, reason: 'unknown' };
-        const existingClient = await this.clientService.findOneByCardUid?.(card.uid) || null;
-        if (existingClient) return { ok: false, reason: 'busy' };
-        return { ok: true };
-      }
-    );
-    this.rfidService.gateway.emit('rfid/register-result', result);
+  @Post('scan-client')
+  async scanClientCard() {
+    const result = await this.rfidService.scanForRfidCard(async (uid, card) => ({ ok: true }));
+    if (result.status === 'ok' && result.uid) {
+      return { status: 'ok', cardId: result.uid };
+    }
     return result;
   }
 
-  @Post('register-book-request')
-  async registerBookRequest() {
-    const result = await this.rfidService.scanForRfidCard(
-      async (uid, card) => {
-        if (!card) return { ok: false, reason: 'unknown' };
-        const existingBook = await this.bookService.findOneByCardUid?.(card.uid) || null;
-        if (existingBook) return { ok: false, reason: 'busy' };
-        return { ok: true };
-      }
-    );
-    this.rfidService.gateway.emit('rfid/register-book-result', result);
+  @Post('scan-book')
+  async scanBookCard() {
+    const result = await this.rfidService.scanForRfidCard(async (uid, card) => ({ ok: true }));
+    if (result.status === 'ok' && result.uid) {
+      return { status: 'ok', cardId: result.uid };
+    }
     return result;
   }
+  // @Post('register-request')
+  // async registerRequest() {
+  //   const result = await this.rfidService.scanForRfidCard(
+  //     async (uid, card) => {
+  //       if (!card) return { ok: false, reason: 'unknown' };
+  //       const existingClient = await this.clientService.findOneByCardUid?.(card.uid) || null;
+  //       if (existingClient) return { ok: false, reason: 'busy' };
+  //       return { ok: true };
+  //     }
+  //   );
+  //   this.rfidService.gateway.emit('rfid/register-result', result);
+  //   return result;
+  // }
+
+  // @Post('register-book-request')
+  // async registerBookRequest() {
+  //   const result = await this.rfidService.scanForRfidCard(
+  //     async (uid, card) => {
+  //       if (!card) return { ok: false, reason: 'unknown' };
+  //       const existingBook = await this.bookService.findOneByCardUid?.(card.uid) || null;
+  //       if (existingBook) return { ok: false, reason: 'busy' };
+  //       return { ok: true };
+  //     }
+  //   );
+  //   this.rfidService.gateway.emit('rfid/register-book-result', result);
+  //   return result;
+  // }
 
   @Post('register-client-mock')
     async registerClientMock(@Body() dto: any) {

@@ -25,7 +25,6 @@ class Display:
             self.font = ImageFont.load_default()
             self.font_small = ImageFont.load_default()
 
-        print("Wyswietlacz OLED zainicjalizowany")
 
     def clear(self):
         """display cleared"""
@@ -55,7 +54,6 @@ class Display:
 
         self.draw.text((5, 25), "UID:", font=self.font_small, fill="WHITE")
 
-        # split UID in 2 lines if too long
         if len(uid_hex) > 8:
             self.draw.text((5, 36), uid_hex[:8], font=self.font_small, fill="CYAN")
             self.draw.text((5, 47), uid_hex[8:], font=self.font_small, fill="CYAN")
@@ -79,17 +77,15 @@ class Display:
     def show_client_found(self, client_name):
         self.clear()
 
-        self.draw.text((5, 5), "UZYTKOWNIK", font=self.font_small, fill="GREEN")
+        self.draw.text((5, 5), "KLIENT", font=self.font, fill="ORANGE")
 
-        self.draw.line([(0, 18), (self.disp.width, 18)], fill="GREEN", width=1)
+        self.draw.line([(0, 18), (self.disp.width, 18)], fill="ORANGE", width=1)
 
-        self.draw.text((5, 25), "Witaj:", font=self.font_small, fill="WHITE")
-
-        if len(client_name) > 10:
-            self.draw.text((5, 38), client_name[:10], font=self.font, fill="YELLOW")
-            self.draw.text((5, 50), client_name[10:], font=self.font_small, fill="YELLOW")
+        if len(client_name) > 12:
+            self.draw.text((5, 25), client_name[:12], font=self.font, fill="PINK")
+            self.draw.text((5, 40), client_name[12:24], font=self.font_small, fill="PINK")
         else:
-            self.draw.text((5, 38), client_name, font=self.font, fill="YELLOW")
+            self.draw.text((5, 30), client_name, font=self.font, fill="PINK")
 
         self.disp.ShowImage(self.image, 0, 0)
 
@@ -100,28 +96,26 @@ class Display:
 
         self.draw.line([(0, 18), (self.disp.width, 18)], fill="CYAN", width=1)
 
-        self.draw.text((5, 25), "Tytul:", font=self.font_small, fill="WHITE")
-
-        if len(book_title) > 10:
-            self.draw.text((5, 38), book_title[:10], font=self.font, fill="YELLOW")
-            self.draw.text((5, 50), book_title[10:20], font=self.font_small, fill="YELLOW")
+        if len(book_title) > 12:
+            self.draw.text((5, 25), book_title[:12], font=self.font, fill="YELLOW")
+            self.draw.text((5, 40), book_title[12:24], font=self.font_small, fill="YELLOW")
         else:
-            self.draw.text((5, 38), book_title, font=self.font, fill="YELLOW")
+            self.draw.text((5, 30), book_title, font=self.font, fill="YELLOW")
 
-        # book icon
-        self._draw_book_icon(70, 35, "WHITE")
 
         self.disp.ShowImage(self.image, 0, 0)
 
     def show_new_card(self):
         self.clear()
 
-        self.draw.text((5, 5), "NOWA KARTA", font=self.font_small, fill="BLUE")
+        self.draw.text((5, 5), "NOWY SKAN", font=self.font_small, fill="BLUE")
 
         self.draw.line([(0, 18), (self.disp.width, 18)], fill="BLUE", width=1)
 
-        self.draw.text((5, 28), "Karta nie jest", font=self.font_small, fill="WHITE")
-        self.draw.text((5, 42), "przypisana", font=self.font, fill="WHITE")
+        # three dots
+        self.draw.ellipse([(25, 40), (30, 45)], fill="BLUE")
+        self.draw.ellipse([(43, 40), (48, 45)], fill="BLUE")
+        self.draw.ellipse([(61, 40), (66, 45)], fill="BLUE")
 
         self.disp.ShowImage(self.image, 0, 0)
 
@@ -132,34 +126,25 @@ class Display:
 
         self.draw.line([(0, 18), (self.disp.width, 18)], fill="RED", width=1)
 
+        # X icon
+        self.draw.line([(35, 28), (60, 53)], fill="RED", width=2)
+        self.draw.line([(60, 28), (35, 53)], fill="RED", width=2)
+
         self.disp.ShowImage(self.image, 0, 0)
 
     def show_success(self):
         self.clear()
 
-        self.draw.text((5, 5), "SUKCES!", font=self.font, fill="GREEN")
+        self.draw.text((5, 5), "SUKCES!", font=self.font, fill="LIME")
 
-        self.draw.line([(0, 18), (self.disp.width, 18)], fill="GREEN", width=1)
+        self.draw.line([(0, 18), (self.disp.width, 18)], fill="LIME", width=1)
 
         # checkmark icon
-        self.draw.line([(30, 40), (40, 50)], fill="GREEN", width=2)
-        self.draw.line([(40, 50), (65, 25)], fill="GREEN", width=2)
+        self.draw.line([(30, 40), (40, 50)], fill="LIME", width=2)
+        self.draw.line([(40, 50), (65, 25)], fill="LIME", width=2)
 
         self.disp.ShowImage(self.image, 0, 0)
 
-    def show_borrowing_count(self, count):
-        self.clear()
-
-        self.draw.text((5, 5), "WYPOZYCZENIA", font=self.font_small, fill="CYAN")
-
-        self.draw.line([(0, 18), (self.disp.width, 18)], fill="CYAN", width=1)
-
-        self.draw.text((5, 28), "Aktualne:", font=self.font_small, fill="WHITE")
-        self.draw.text((30, 42), str(count), font=self.font, fill="YELLOW")
-
-        self._draw_book_icon(65, 35, "WHITE")
-
-        self.disp.ShowImage(self.image, 0, 0)
 
     def _draw_card_icon(self, x, y, color):
         # prostokat karty
@@ -167,15 +152,6 @@ class Display:
         # chip
         self.draw.rectangle([(x + 3, y + 3), (x + 8, y + 9)], fill=color)
 
-    def _draw_book_icon(self, x, y, color):
-        # ksiazka
-        self.draw.rectangle([(x, y), (x + 12, y + 16)], outline=color, width=1)
-        # grzbiet
-        self.draw.line([(x + 3, y), (x + 3, y + 16)], fill=color, width=1)
-        # strony
-        self.draw.line([(x + 6, y + 4), (x + 10, y + 4)], fill=color, width=1)
-        self.draw.line([(x + 6, y + 8), (x + 10, y + 8)], fill=color, width=1)
-        self.draw.line([(x + 6, y + 12), (x + 10, y + 12)], fill=color, width=1)
 
     def cleanup(self):
         self.clear()
@@ -188,36 +164,32 @@ if __name__ == "__main__":
     try:
         display = Display()
 
-        print("Test 1: Czekam na karte")
+        print("1. Czekam na karte")
         display.show_waiting_for_card()
         time.sleep(3)
 
-        print("Test 2: Karta wykryta")
-        display.show_card_detected("AABBCCDD")
+        print("2. Karta wykryta")
+        display.show_card_detected("FGRG4535425ADSGHJ")
         time.sleep(3)
 
-        print("Test 3: Przetwarzanie")
-        display.show_processing()
-        time.sleep(2)
-
-        print("Test 4: Klient znaleziony")
-        display.show_client_found("Jan Kowalski")
+        print("3. Klient znaleziony")
+        display.show_client_found("Angelika Katarzyna Wysocka")
         time.sleep(3)
 
-        print("Test 5: Nowa karta")
+        print("4. Ksiazka znaleziona")
+        display.show_book_found("Zdazyc przed Panem Bogiem")
+        time.sleep(3)
+
+        print("5. Nowa karta")
         display.show_new_card()
         time.sleep(3)
 
-        print("Test 6: Ilosc wypozyczen")
-        display.show_borrowing_count(3)
+        print("6. Blad")
+        display.show_error()
         time.sleep(3)
 
-        print("Test 7: Sukces")
+        print("7. Sukces")
         display.show_success()
-        time.sleep(2)
-
-        print("Test 8: Blad")
-        display.show_error()
         time.sleep(3)
 
         print("\nTest zakonczony")

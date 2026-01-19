@@ -6,7 +6,6 @@ from mqtt_client import MQTTClient
 from led_controller import LEDController
 from buzzer import Buzzer
 from display import Display
-import sys
 import time
 
 
@@ -65,9 +64,6 @@ class LibraryRFIDSystem:
             self.display.show_client_found(client_name)
             time.sleep(2)
 
-            # pokaz ilosc wypozyczen
-            borrow_count = len(borrows)
-            self.display.show_borrowing_count(borrow_count)
         elif book:
             # ksiazka znaleziona
             book_title = book.get('title', 'Unknown')
@@ -77,17 +73,7 @@ class LibraryRFIDSystem:
             # nowa karta - nie jest przypisana
             self.display.show_new_card()
 
-    def run_single_scan(self):
-        """
-        Uruchamia pojedyncze skanowanie karty:
-        1. LED zielony - gotowy
-        2. Czeka na karte
-        3. Odczytuje karte
-        4. Wysyla przez MQTT
-        5. Konczy dzialanie
-        """
-
-        # Krok 1: Polaczenie z MQTT brokerem
+    def connect(self):
         print("\nLaczenie z MQTT brokerem...")
         if not self.mqtt.connect(timeout=10):
             print("\nBLAD: Nie udalo sie polaczyc z MQTT brokerem")
@@ -95,63 +81,67 @@ class LibraryRFIDSystem:
             print("   docker run -p 1883:1883 eclipse-mosquitto:2.0")
             self.display.show_error()
             return False
-
-        # Krok 2: LED zielony - gotowy do skanowania
-        self.led.green()
-        self.display.show_waiting_for_card()
-        print("\nLED ZIELONY - Mozna przylozyc karte")
-
-        # Krok 3: Czekanie na karte RFID
-        card_data = self.rfid.read_single_card()
-
-        if not card_data:
-            print("\nNie udalo sie odczytac karty")
-            self.buzzer.beep_error()
-            self.display.show_error()
-            return False
-
-        # Krok 4: beep + LED czerwony
-        self.buzzer.beep_success()
-        self.led.red()
-        self.display.show_card_detected(card_data['uid_hex'])
-        print("\nLED CZERWONY - Przetwarzam karte...")
-        time.sleep(1)
-
-        # Krok 5: Wyslanie danych przez MQTT
-        self.display.show_processing()
-        print("\nWysylam dane karty do backendu...")
-        if not self.mqtt.publish_scan(card_data):
-            print("\nNie udalo sie wyslac danych przez MQTT")
-            self.buzzer.beep_error()
-            self.display.show_error()
-            return False
-
-        self.card_sent = True
-        print("\nDane karty wyslane do backendu")
-        print("\nCzekam na odpowiedz z backendu...")
-
-        # Krok 6: Czekanir na odpowiedz z backendu (max 10 sekund)
-        timeout = 10
-        start_time = time.time()
-
-        while not self.backend_response_received and (time.time() - start_time) < timeout:
-            time.sleep(0.1)
-
-        if self.backend_response_received:
-            print("\nOtrzymano odpowiedz z backendu!")
-            self.buzzer.beep_success()
-            time.sleep(3)
-            self.display.show_success()
-            time.sleep(2)
-        else:
-            print("\nTimeout: Brak odpowiedzi z backendu w ciagu 10 sekund")
-            print("Sprawdz czy backend jest uruchomiony i obsluguje MQTT")
-            self.display.show_error()
-            time.sleep(2)
-
-        # Krok 7: Zakoncz
-        print("\nSkanowanie zakonczone")
         return True
+
+    def reset_state(self):
+        self.card_sent = False
+        self.backend_response_received = False
+        self.client_data = None
+
+    def run(self):
+        if not self.connect():
+            return
+
+        print("\nSystem gotowy - nasluchuje kart...")
+
+        while True:
+            self.reset_state()
+
+            self.led.green()
+            self.display.show_waiting_for_card()
+            print("\nLED ZIELONY - Mozna przylozyc karte")
+
+            card_data = self.rfid.read_single_card()
+
+            if not card_data:
+                print("\nNie udalo sie odczytac karty")
+                self.buzzer.beep_error()
+                self.display.show_error()
+                time.sleep(2)
+                continue
+
+            self.buzzer.beep_success()
+            self.led.red()
+            self.display.show_card_detected(card_data['uid_hex'])
+            print("\nLED CZERWONY - Przetwarzam karte...")
+
+            print("\nWysylam dane karty do backendu...")
+            if not self.mqtt.publish_scan(card_data):
+                print("\nNie udalo sie wyslac danych przez MQTT")
+                self.buzzer.beep_error()
+                self.display.show_error()
+                time.sleep(2)
+                continue
+
+            self.card_sent = True
+            print("\nDane karty wyslane do backendu")
+            print("\nCzekam na odpowiedz z backendu...")
+
+            timeout = 10
+            start_time = time.time()
+
+            while not self.backend_response_received and (time.time() - start_time) < timeout:
+                time.sleep(0.1)
+
+            if self.backend_response_received:
+                print("\nOtrzymano odpowiedz z backendu!")
+                self.buzzer.beep_success()
+                time.sleep(2)
+            else:
+                print("\nTimeout: Brak odpowiedzi z backendu w ciagu 10 sekund")
+                print("Sprawdz czy backend jest uruchomiony i obsluguje MQTT")
+                self.display.show_error()
+                time.sleep(2)
 
     def cleanup(self):
         self.led.off()
@@ -164,14 +154,7 @@ def main():
     system = LibraryRFIDSystem()
 
     try:
-        success = system.run_single_scan()
-
-        if success:
-            print("PROGRAM ZAKONCZONY POMYSLNIE")
-            sys.exit(0)
-        else:
-            print("PROGRAM ZAKONCZONY Z BLEDEM")
-            sys.exit(1)
+        system.run()
 
     except KeyboardInterrupt:
         print("\nPrzerwano przez uzytkownika")

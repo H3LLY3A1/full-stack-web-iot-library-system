@@ -61,24 +61,14 @@ class RFIDReader:
                             'uid_int': uid_int,
                             'timestamp': timestamp
                         }
-
+                        
                         print("\nKarta wykryta!")
                         print(f"   Czas:      {timestamp}")
                         print(f"   UID (hex): {uid_hex}")
                         print(f"   UID (int): {uid_int}")
 
-                        # wait for card removal
-                        print("\nCzekam az karta zostanie zabrana...")
+                        return card_data
 
-                time.sleep(0.1)
-
-            else:
-                # check if card was logged and removed
-                if card_logged and (now - last_seen_time) > CARD_RELEASE_DELAY:
-                    print("Karta zabrana, dane zebrane!")
-                    return card_data
-
-                time.sleep(0.1)
 
     def read_single_card(self):
         """
